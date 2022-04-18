@@ -7,6 +7,12 @@
 import ImageIO
 import UIKit
 
+public extension Notification.Name {
+    static let gifDidStart = Notification.Name("gifDidStart")
+    static let gifURLDidFinish = Notification.Name("gifURLDidFinish")
+    static let gifURLDidFail = Notification.Name("gifURLDidFail")
+}
+
 @objc public protocol SwiftyGifDelegate {
     @objc optional func gifDidStart(sender: UIImageView)
     @objc optional func gifDidLoop(sender: UIImageView)
@@ -182,6 +188,9 @@ public extension UIImageView {
             setGifImage(image, manager: manager, loopCount: loopCount)
             startAnimatingGif()
             delegate?.gifURLDidFinish?(sender: self, url: url, data: data)
+            NotificationCenter.default.post(
+                name: .gifURLDidFinish, object: self, userInfo: ["url" : url, "data": data]
+            )
         } catch {
             report(url: url, error: error)
         }
@@ -189,6 +198,9 @@ public extension UIImageView {
     
     private func report(url: URL, error: Error?) {
         delegate?.gifURLDidFail?(sender: self, url: url, error: error)
+        NotificationCenter.default.post(
+            name: .gifURLDidFail, object: self, userInfo: ["url" : url, "error": error as Any]
+        )
     }
 }
 
@@ -459,6 +471,7 @@ public extension UIImageView {
             
             if newValue {
                 delegate?.gifDidStart?(sender: self)
+                NotificationCenter.default.post(name: .gifDidStart, object: self, userInfo: nil)
             }
         }
     }
